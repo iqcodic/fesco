@@ -1,18 +1,24 @@
-const express = require('express');
-const { scrapeBill } = require('./scraper');
+import express from "express";
+import cors from "cors";
+import { scrapeBill } from "./scraper.js";
+
 const app = express();
+app.use(cors());
 app.use(express.json());
 
-app.post('/api/bill', async (req, res) => {
+const PORT = process.env.PORT || 3000;
+
+app.get("/", (req, res) => res.send("PAKBILLCHECK API running. Use /api/bill"));
+
+app.post("/api/bill", async (req, res) => {
   const { ref } = req.body;
-  if (!ref) return res.status(400).json({ error: 'Reference required' });
+  if(!ref) return res.status(400).json({ error: "Reference missing" });
   try {
-    const data = await scrapeBill(ref);
-    return res.json({ success: true, data });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ success: false, error: err.message });
+    const billData = await scrapeBill(ref);
+    res.json(billData);
+  } catch(err) {
+    res.status(500).json({ error: err.message });
   }
 });
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server listening on ${PORT}`));
+
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
